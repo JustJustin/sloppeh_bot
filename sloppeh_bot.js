@@ -2,7 +2,14 @@ const fs = require("fs");
 const Discord = require("discord.js");
 const client = new Discord.Client();
 
+const printDebug = false;
 const token = fs.readFileSync("bot.token", {encoding:'utf8'});
+
+function debuglog() {
+    if (printDebug) {
+        console.log.apply(console, arguments);
+    }
+}
 
 function sloppeh_cleanup(msg) {
     if (msg.guild && msg.guild.voiceConnection) {
@@ -40,9 +47,9 @@ function sloppeh(msg) {
             // We have a channel(s) we can speak in, use the first one found.
             var channel = voiceChannels[0];
             channel.join().then(connection => {
-                connection.on("debug", console.log);
+                connection.on("debug", debuglog);
                 console.log("Connected to voice channel " + channel.name + " (" + channel.id + ")");
-                connection.playFile("./sloppy.mp3").on("debug", console.log).once("end", reason => {
+                connection.playFile("./sloppy.mp3").on("debug", debuglog).once("end", reason => {
                     console.log("Played file!");
                     if (reason != "cleanup") {
                         connection.disconnect();
