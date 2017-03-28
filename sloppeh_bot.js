@@ -20,6 +20,7 @@ function cleanup(msg) {
         msg.guild.voiceConnection.disconnect("cleanup");
     }
 }
+
 function playSound(msg, soundFile) {
     var user = msg.author;
     if (msg.guild && msg.guild.available) {
@@ -53,12 +54,18 @@ function playSound(msg, soundFile) {
             channel.join().then(connection => {
                 connection.on("debug", debuglog);
                 console.log("Connected to voice channel " + channel.name + " (" + channel.id + ")" + " playing " + soundFile);
-                connection.playFile(soundFile).on("debug", debuglog).once("end", reason => {
+                var dispatcher = connection.playFile(soundFile).on("debug", debuglog).once("end", reason => {
                     console.log("Played file!");
                     if (reason != "cleanup") {
                         connection.disconnect();
                     }
                 });
+                /*client.setTimeout(function() {
+                    if (!printDebug) {return;}
+                    console.log("Timeout for " + soundFile);
+                    console.log(connection);
+                    console.log(dispatcher);
+                }, 5000);*/
             }).catch(err => {
                 if (channel.connection) {
                     channel.connection.disconnect();
@@ -85,12 +92,28 @@ client.on("message", msg => {
     for (var soundCmd in sounds) {
         if (msg.content.startsWith(soundCmd)) {
             playSound(msg, sounds[soundCmd]);
+            break;
         }
     }
 });
 
 client.on("ready", () => {
     console.log("Client has received ready event.");
+    if (client.guilds && client.guilds.size) {
+        console.log("Currently idling in:");
+        for (let [id, guild] of client.guilds) {
+            console.log("\t" + guild.name + " " + id);
+        }
+        console.log("");
+    }
+    // Let's check for any voiceConnection and close it.
+    if (client.voiceConnections && client.voiceConnections.size) {
+        console.log(client.voiceConnections);
+        console.log("Closing all open voice connections.");
+        for (let [id, voiceConnection] of client.voiceConnections) {
+            voiceConnection.disconnect();
+        }
+    }
 });
 
 client.login(token);
