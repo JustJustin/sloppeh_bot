@@ -3,7 +3,11 @@ const Discord = require("discord.js");
 const client = new Discord.Client();
 
 const printDebug = false;
+// Get Bot Token
 const token = fs.readFileSync("bot.token", {encoding:'utf8'});
+
+// Load sounds file config
+const sounds = require("./sounds.js");
 
 function debuglog() {
     if (printDebug) {
@@ -11,12 +15,12 @@ function debuglog() {
     }
 }
 
-function sloppeh_cleanup(msg) {
+function cleanup(msg) {
     if (msg.guild && msg.guild.voiceConnection) {
         msg.guild.voiceConnection.disconnect("cleanup");
     }
 }
-function sloppeh(msg) {
+function playSound(msg, soundFile) {
     var user = msg.author;
     if (msg.guild && msg.guild.available) {
         console.log("Sloppying it up in " + msg.guild.name + " (" + msg.guild.id + ")"); 
@@ -48,8 +52,8 @@ function sloppeh(msg) {
             var channel = voiceChannels[0];
             channel.join().then(connection => {
                 connection.on("debug", debuglog);
-                console.log("Connected to voice channel " + channel.name + " (" + channel.id + ")");
-                connection.playFile("./sloppy.mp3").on("debug", debuglog).once("end", reason => {
+                console.log("Connected to voice channel " + channel.name + " (" + channel.id + ")" + " playing " + soundFile);
+                connection.playFile(soundFile).on("debug", debuglog).once("end", reason => {
                     console.log("Played file!");
                     if (reason != "cleanup") {
                         connection.disconnect();
@@ -67,18 +71,20 @@ function sloppeh(msg) {
     }
 }
 
+// This is for bot related commands
 var commands = {
-    "!sloppeh": sloppeh,
-    "!sloppy": sloppeh,
-    "!sloppyclean": sloppeh_cleanup,
-    "!sloppehclean": sloppeh_cleanup,
+    "!clean": cleanup,
 };
-
 
 client.on("message", msg => {
     for (var cmd in commands) {
         if (msg.content.startsWith(cmd)) {
             commands[cmd](msg);
+        }
+    }
+    for (var soundCmd in sounds) {
+        if (msg.content.startsWith(soundCmd)) {
+            playSound(msg, sounds[soundCmd]);
         }
     }
 });
